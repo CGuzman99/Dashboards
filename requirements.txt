@@ -1,3 +1,2 @@
 plotly
 fastf1
-fastf1.plotting
