@@ -8,18 +8,18 @@ import numpy as np
 
 today = pd.Timestamp.today()
 with st.sidebar:
-    st.title("Event Selection Panel")
+    st.title("Race settings")
     seasons = [i for i in range(2018, today.year+1)]
     season = st.selectbox('Season', seasons, index=len(seasons)-1)
     events = fastf1.get_event_schedule(season)[['EventDate', 'EventName']]
     last_event_index = len(events.loc[events['EventDate']<=today, 'EventDate']) - 1
-    event = st.selectbox('Event', events['EventName'], index=last_event_index)
+    event = st.selectbox('Grand Prix', events['EventName'], index=last_event_index)
 
-    drivers = Ergast(result_type='pandas').get_driver_standings(season=season).content[0]
+    drivers_lst = Ergast(result_type='pandas').get_driver_standings(season=season).content[0]['driverCode']
 
     drivers = st.multiselect("Select drivers",
-        drivers['driverCode'],
-        default=[],
+        drivers_lst,
+        default=drivers_lst[:2],
     )
 
 #######################################################################################################################
