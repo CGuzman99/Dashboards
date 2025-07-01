@@ -163,6 +163,8 @@ for idx, lap in fast_laps.iterrows():
 # Find fastest driver per sector
 fastest_by_sector = {}
 for sector in ['Sector1', 'Sector2', 'Sector3']:
+    if not sector_times[sector]:
+        break 
     fastest_by_sector[sector] = min(sector_times[sector], key=sector_times[sector].get)
 
 print("Pilotos más rápidos por sector:")
@@ -203,6 +205,8 @@ fig.add_trace(go.Scatter(
 added = set()
 # Add each sector with the color of the fastest driver per sector
 for sector_data, sector_name in zip([sector1, sector2, sector3], ['Sector1', 'Sector2', 'Sector3']):
+    if not fastest_by_sector:
+        break
     distance = sector_data['Distance'].iloc[-1] - sector_data['Distance'].iloc[0]
     drv = fastest_by_sector[sector_name]
     time = fast_laps.loc[fast_laps['Driver']==drv, sector_name+"Time"].dt.total_seconds()
