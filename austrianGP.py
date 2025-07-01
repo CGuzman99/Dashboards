@@ -1,7 +1,7 @@
 import streamlit as st
 import plotly.graph_objects as go
 import fastf1
-import fastf1.plotting as plotting
+from fastf1 import plotting
 import numpy as np
 
 # Get session data
@@ -33,7 +33,7 @@ for drv in drvs_laps['Driver'].unique():
     df = drv_laps[['Lap', 'Position']]
 
     # Get driver style (color + linestyle)
-    style = fastf1.plotting.get_driver_style(identifier=drv, style=['color', 'linestyle'], session=session)
+    style = plotting.get_driver_style(identifier=drv, style=['color', 'linestyle'], session=session)
     color = style['color']
     dash = 'dash' if style['linestyle']=='dashed' else 'solid'  # 'solid', 'dashed', 'dotted', etc.
 
@@ -150,9 +150,9 @@ sector_times = {
 }
 
 # Get drivers colors
-fastf1.plotting.setup_mpl()
-driver_colors = fastf1.plotting.DRIVER_COLORS
-driver_translate = fastf1.plotting.DRIVER_TRANSLATE
+plotting.setup_mpl()
+driver_colors = plotting.DRIVER_COLORS
+driver_translate = plotting.DRIVER_TRANSLATE
 
 # Map sector times
 for idx, lap in fast_laps.iterrows():
