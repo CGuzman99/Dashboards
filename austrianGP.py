@@ -1,6 +1,7 @@
 import streamlit as st
 import plotly.graph_objects as go
 import fastf1
+import fastf1.plotting
 import numpy as np
 
 # Get session data
