@@ -1,5 +1,2 @@
-streamlit
 plotly
 fastf1
-numpy
-pandas
