@@ -1,7 +1,7 @@
 import streamlit as st
 import plotly.graph_objects as go
 import fastf1
-import fastf1.plotting
+import fastf1.plotting as plotting
 import numpy as np
 
 # Get session data
@@ -70,8 +70,8 @@ drvs_laps = drvs_laps.reset_index()
 drvs_laps["LapTime(s)"] = drvs_laps["LapTime"].dt.total_seconds()
 
 # Get color mapping
-driver_colors = fastf1.plotting.get_driver_color_mapping(session=session)
-compound_colors = fastf1.plotting.get_compound_mapping(session=session)
+driver_colors = plotting.get_driver_color_mapping(session=session)
+compound_colors = plotting.get_compound_mapping(session=session)
 
 # Create figure
 fig = go.Figure()
