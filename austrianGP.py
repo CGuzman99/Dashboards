@@ -2,25 +2,37 @@ import streamlit as st
 import plotly.graph_objects as go
 import fastf1
 from fastf1 import plotting
+from fastf1.ergast import Ergast
+import pandas as pd
 import numpy as np
 
+today = pd.Timestamp.today()
+with st.sidebar:
+    st.title("Event Selection Panel")
+    seasons = [i for i in range(2018, today.year+1)]
+    season = st.selectbox('Season', seasons, index=len(seasons)-1)
+    events = fastf1.get_event_schedule(season)[['EventDate', 'EventName']]
+    last_event_index = len(events.loc[events['EventDate']<=today, 'EventDate']) - 1
+    event = st.selectbox('Event', events['EventName'], index=last_event_index)
+
+    drivers = Ergast(result_type='pandas').get_driver_standings(season=season).content[0]
+
+    drivers = st.multiselect("Select drivers",
+        drivers['driverCode'],
+        default=[],
+    )
+
+#######################################################################################################################
 # Get session data
-session = fastf1.get_session(2025, 'Austria', 'R')
+session = fastf1.get_session(season, event, 'R')
 session.load(weather=False)
 
-results = session.results[['DriverNumber', 'FullName', 'Abbreviation']]
-
+results = session.results[['DriverNumber', 'LastName', 'Abbreviation']]# Select drivers
 # Project title
 st.title(session.event['OfficialEventName'])
 
-# Select drivers
-drivers = st.multiselect("Select drivers",
-    results['FullName'],
-    default=[],
-)
-
 # Filter results of selected drivers
-drvs_laps = session.laps.pick_drivers(results.loc[results['FullName'].isin(drivers), 'DriverNumber']).rename(columns={'LapNumber': 'Lap'})
+drvs_laps = session.laps.pick_drivers(results.loc[results['Abbreviation'].isin(drivers), 'DriverNumber']).rename(columns={'LapNumber': 'Lap'})
 
 # Create figure
 fig = go.Figure()
