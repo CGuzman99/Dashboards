@@ -302,10 +302,10 @@ stints = pd.DataFrame(columns=['Driver', 'Stint', 'Compound', 'AvgLapTimeFormatt
 laps_grouped = laps.groupby(['Driver', 'Stint', 'Compound'])
 stints['AvgLapTime'] = laps_grouped['LapTime'].mean()
 stints['AvgLapTime(s)'] = round(stints['AvgLapTime'].dt.total_seconds(), 3)
-stints['AvgLapTimeFormatted'] = stints['AvgLapTime'].apply(format_timedelta)
+stints['AvgLapTimeFormatted'] = stints['AvgLapTime'].fillna(pd.Timedelta(0)).apply(format_timedelta)
 stints['StdLapTime'] = laps_grouped['LapTime'].std()
 stints['NumLaps'] = laps_grouped['LapNumber'].count()
-stints['StdLapTime'] = stints['StdLapTime'].apply(format_timedelta)
+stints['StdLapTime'] = stints['StdLapTime'].fillna(pd.Timedelta(0)).apply(format_timedelta)
 
 # Create Figure
 fig1 = go.Figure()
