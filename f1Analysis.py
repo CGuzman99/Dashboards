@@ -296,7 +296,7 @@ st.subheader("Driver Stint Comparison")
 laps = st.session_state['data'].laps.pick_drivers(results.loc[results['Abbreviation'].isin(drivers), 'DriverNumber'])
 driver_colors = plotting.DRIVER_COLORS
 
-stints = pd.DataFrame()
+stints = pd.DataFrame(columns=['Driver', 'Stint', 'Compound', 'AvgLapTime'])
 
 # Get average time per stint
 laps_grouped = laps.groupby(['Driver', 'Stint', 'Compound'])
