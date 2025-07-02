@@ -41,15 +41,15 @@ if (season != st.session_state['year']) or (event != st.session_state['gp']):
 
 # Cargar datos solo si no están cargados
 if not st.session_state["data_loaded"]:
-    st.spinner("Loading data...")
-    session = fastf1.get_session(
-        st.session_state["year"],
-        st.session_state["gp"],
-        st.session_state["session_type"]
-    )
-    session.load(weather=False)
-    st.session_state["data"] = session
-    st.session_state["data_loaded"] = True
+    with st.spinner("Loading session data..."):
+        session = fastf1.get_session(
+            st.session_state["year"],
+            st.session_state["gp"],
+            st.session_state["session_type"]
+        )
+        session.load(weather=False)
+        st.session_state["data"] = session
+        st.session_state["data_loaded"] = True
 #######################################################################################################################
 # Get session data
 #session = fastf1.get_session(season, event, 'R')
