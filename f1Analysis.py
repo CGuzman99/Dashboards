@@ -6,6 +6,8 @@ from fastf1.ergast import Ergast
 import pandas as pd
 import numpy as np
 
+
+
 today = pd.Timestamp.today()
 with st.sidebar:
     st.title("Race settings")
@@ -20,20 +22,45 @@ with st.sidebar:
 
     drivers = st.multiselect("Select drivers",
         drivers_lst,
-        default=drivers_lst[:2],
+        default=[],
     )
 
+    st.session_state["drivers"] = drivers
+# Inicializar la sesión solo una vez
+if "data_loaded" not in st.session_state:
+    st.session_state["data_loaded"] = False
+    st.session_state["data"] = None
+    st.session_state["year"] = season
+    st.session_state["gp"] = event
+    st.session_state["session_type"] = "R"
+
+if (season != st.session_state['year']) or (event != st.session_state['gp']):
+    st.session_state["year"] = season
+    st.session_state["gp"] = event
+    st.session_state["data_loaded"] = False  # Fuerza recarga
+
+# Cargar datos solo si no están cargados
+if not st.session_state["data_loaded"]:
+    st.write("Cargando datos...")
+    session = fastf1.get_session(
+        st.session_state["year"],
+        st.session_state["gp"],
+        st.session_state["session_type"]
+    )
+    session.load(weather=False)
+    st.session_state["data"] = session
+    st.session_state["data_loaded"] = True
 #######################################################################################################################
 # Get session data
-session = fastf1.get_session(season, event, 'R')
-session.load(weather=False)
+#session = fastf1.get_session(season, event, 'R')
+#session.load(weather=False)
 
-results = session.results[['DriverNumber', 'LastName', 'Abbreviation']]# Select drivers
+results = st.session_state['data'].results[['DriverNumber', 'LastName', 'Abbreviation']]# Select drivers
 # Project title
-st.title(session.event['OfficialEventName'])
+st.title(st.session_state['data'].event['OfficialEventName'])
 
 # Filter results of selected drivers
-drvs_laps = session.laps.pick_drivers(results.loc[results['Abbreviation'].isin(drivers), 'DriverNumber']).rename(columns={'LapNumber': 'Lap'})
+drvs_laps = st.session_state['data'].laps.pick_drivers(results.loc[results['Abbreviation'].isin(drivers), 'DriverNumber']).rename(columns={'LapNumber': 'Lap'})
 
 # Create figure
 fig = go.Figure()
@@ -46,7 +73,7 @@ for drv in drvs_laps['Driver'].unique():
     df = drv_laps[['Lap', 'Position']]
 
     # Get driver style (color + linestyle)
-    style = plotting.get_driver_style(identifier=drv, style=['color', 'linestyle'], session=session)
+    style = plotting.get_driver_style(identifier=drv, style=['color', 'linestyle'], session=st.session_state['data'])
     color = style['color']
     dash = 'dash' if style['linestyle']=='dashed' else 'solid'  # 'solid', 'dashed', 'dotted', etc.
 
@@ -83,8 +110,8 @@ drvs_laps = drvs_laps.reset_index()
 drvs_laps["LapTime(s)"] = drvs_laps["LapTime"].dt.total_seconds()
 
 # Get color mapping
-driver_colors = plotting.get_driver_color_mapping(session=session)
-compound_colors = plotting.get_compound_mapping(session=session)
+driver_colors = plotting.get_driver_color_mapping(session=st.session_state['data'])
+compound_colors = plotting.get_compound_mapping(session=st.session_state['data'])
 
 # Create figure
 fig = go.Figure()
@@ -186,7 +213,7 @@ for sector, drv in fastest_by_sector.items():
     print(f"{sector}: {drv}")
 
 # Get the data of the fastest lap overall
-overall_fastest_lap = session.laps.pick_fastest()
+overall_fastest_lap = st.session_state['data'].laps.pick_fastest()
 car_data = overall_fastest_lap.get_car_data().add_distance()
 lap_telemetry = overall_fastest_lap.get_telemetry().add_distance()
 
