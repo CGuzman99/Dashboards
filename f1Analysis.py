@@ -215,7 +215,7 @@ tab2.dataframe(fastest_by_sector)
 
 st.subheader("Lap times distributions")
 
-drvs_laps = drvs_laps.pick_quicklaps()
+drvs_laps = drvs_laps.loc[(~drvs_laps['TrackStatus'].str.contains('|'.join(['3', '4', '5', '6', '7']))) & (drvs_laps['PitInTime'].isnull()) & (drvs_laps['PitOutTime'].isnull())]
 drvs_laps = drvs_laps.reset_index()
 
 # Convert LapTime to seconds
@@ -246,7 +246,7 @@ for drv in drvs_laps['Driver'].unique():
         showlegend=False
     ))
 
-compound_order = ["SOFT", "MEDIUM", "HARD"]
+compound_order = drvs_laps['Compound'].unique()
 shown_in_legend = set()
 for compound in compound_order:
     compound_laps = drvs_laps[drvs_laps["Compound"] == compound]
@@ -274,9 +274,6 @@ for compound in compound_order:
 
 # Adjust design
 fig.update_layout(
-    #title="Lap times distributions",
-    #title_x=0.5,
-    #title_xanchor='center',
     xaxis_title="Driver",
     yaxis_title="LapTime (s)",
     template="plotly_white",
@@ -382,7 +379,7 @@ fig2.update_layout(
         tick0=1,         # Valor inicial del eje x
         dtick=1          # Distancia entre ticks (1 = solo enteros consecutivos)
     ),
-    xaxis_title='Driver',
+    xaxis_title='Stint',
     yaxis_title='Avg Lap Time (s)',
     hovermode='closest',
     legend_title='Driver'
