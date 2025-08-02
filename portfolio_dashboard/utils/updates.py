@@ -66,6 +66,7 @@ def update_portfolio_history():
             )
 
             if not new_values.empty:
+                new_values['Fecha'] = pd.to_datetime(new_values['Fecha'], errors='coerce').dt.date
                 new_history = pd.concat([history, new_values], ignore_index=True)
                 write_sheet_data("Daily_values", new_history)
                 #st.success(f"✅ Actualizados {len(new_values)} días de datos")
