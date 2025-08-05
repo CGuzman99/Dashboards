@@ -8,14 +8,14 @@ import json
 import os
 from typing import Tuple, Dict, Optional
 
-from utils.data_loader import conectar_google_sheets, get_sheet_id, load_sheet_data, load_portfolio_data
+import utils.data_loader as data_loader
 from utils.calculations import calculate_daily_portfolio_values
 
 def write_sheet_data(worksheet_name: str, data: pd.DataFrame):
     """ Escribir dataframe en worksheet """
     try:
-        gc = conectar_google_sheets()
-        sheet_id = get_sheet_id()
+        gc = data_loader.conectar_google_sheets()
+        sheet_id = data_loader.get_sheet_id()
         sheet = gc.open_by_key(sheet_id)
         worksheet = sheet.worksheet(worksheet_name)
 
@@ -43,7 +43,7 @@ def update_portfolio_history():
     
     with st.spinner("Verificando actualizaciones del portafolio..."):
 
-        history = load_sheet_data("Daily_values")
+        operaciones, transacciones, dividendos, history = data_loader.load_portfolio_data()
 
         if not history.empty:
             last_date = pd.to_datetime(history['Fecha'].iloc[-1])
@@ -56,22 +56,27 @@ def update_portfolio_history():
 
         if len(dias_faltantes) == 0:
             #st.success("✅ Datos del portafolio actualizados")
-            return
+            return False
 
         try:
-            operaciones, transacciones, dividendos, _ = load_portfolio_data()
             new_values = calculate_daily_portfolio_values(
                 operaciones, transacciones, dividendos, 
                 start_date=last_date + timedelta(days=1)
             )
 
             if not new_values.empty:
-                new_values['Fecha'] = pd.to_datetime(new_values['Fecha'], errors='coerce').dt.date
+                new_values['Fecha'] = pd.to_datetime(new_values['Fecha'], errors='coerce')
                 new_history = pd.concat([history, new_values], ignore_index=True)
+
+                data_loader.load_portfolio_data.clear()
+
                 write_sheet_data("Daily_values", new_history)
-                #st.success(f"✅ Actualizados {len(new_values)} días de datos")
+                st.success(f"✅ Actualizados {len(new_values)} días de datos")
+                return True
             else:
                 st.info("ℹ️ No hay datos que actualizar")
+                return False
 
         except Exception as e:
             st.error(f"❌ Error actualizando portafolio: {str(e)}")
+            return False

@@ -2,30 +2,37 @@ import streamlit as st
 from auth.login import require_auth, login_form
 
 from utils.calculations import calculate_current_holdings, calculate_daily_portfolio_values, calculate_holdings_returns, calculate_metrics_summary, calculate_portfolio_allocation, calculate_portfolio_value, calculate_returns, calculate_sector_allocation
-from utils.data_loader import *
-from utils.visualizations import *
+import utils.data_loader as data_loader
+import utils.visualizations as vis
 from utils.updates import update_portfolio_history
-import streamlit as st
 
 
 def show_dashboard():
     st.title("Portafolio de inversiones")
 
-    update_portfolio_history()
+    if 'portfolio_updated' not in st.session_state:
+        st.session_state.portfolio_updated = False
 
-    operaciones, transacciones, dividendos, daily_portfolio_values = load_portfolio_data()
-    benchmark = get_benchmark_data('^SPX', start_date='2025-03-23')
+    if not st.session_state.portfolio_updated:
+        if update_portfolio_history():
+            st.cache_data.clear()
+            st.session_state.portfolio_updated = True
+            st.rerun()
 
-    symbols = get_available_symbols(operaciones)
-    current_prices = get_current_prices(symbols)
+    operaciones, transacciones, dividendos, daily_portfolio_values = data_loader.load_portfolio_data()
+    st.write("Última fecha:", daily_portfolio_values['Fecha'].max())
+    benchmark = data_loader.get_benchmark_data('^SPX', start_date='2025-03-23')
+
+    symbols = data_loader.get_available_symbols(operaciones)
+    current_prices = data_loader.get_current_prices(symbols)
 
     holdings = calculate_current_holdings(operaciones)
     holdings_returns = calculate_holdings_returns(holdings, current_prices)
 
     st.subheader('Cambio del portafolio')
 
-    plot_evolution = plot_portfolio_evolution(daily_portfolio_values)
-    plot_performance = plot_performance_comparison(daily_portfolio_values, benchmark)
+    plot_evolution = vis.plot_portfolio_evolution(daily_portfolio_values)
+    plot_performance = vis.plot_performance_comparison(daily_portfolio_values, benchmark)
 
     tab1, tab2 = st.tabs(['Valor', 'Rendimiento'])
     
@@ -39,8 +46,8 @@ def show_dashboard():
     portfolio_allocation = calculate_portfolio_allocation(holdings, current_prices)
     sector_allocation = calculate_sector_allocation(holdings, current_prices)
 
-    plot_portfolio_allocation = plot_allocation_pie(portfolio_allocation)
-    plot_sectors = plot_sector_allocation(sector_allocation)
+    plot_portfolio_allocation = vis.plot_allocation_pie(portfolio_allocation)
+    plot_sectors = vis.plot_sector_allocation(sector_allocation)
 
     tab1, tab2 = st.tabs(['Activos', 'Sectores'])
 
@@ -51,8 +58,8 @@ def show_dashboard():
 
     st.subheader("Posiciones")
 
-    plot_holdings = plot_holdings_performance(holdings_returns)
-    plot_hold_pl = plot_holdings_pl(holdings_returns)
+    plot_holdings = vis.plot_holdings_performance(holdings_returns)
+    plot_hold_pl = vis.plot_holdings_pl(holdings_returns)
 
     tab1, tab2, tab3 = st.tabs(['Ganancia/Pérdida', 'Rendimiento', 'Data'])
     with tab1:
