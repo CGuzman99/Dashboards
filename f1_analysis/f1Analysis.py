@@ -121,7 +121,7 @@ sector_times = {
 
 # Get drivers colors
 plotting.setup_mpl()
-driver_colors = plotting.DRIVER_COLORS
+driver_colors = plotting.get_driver_color_mapping(session=st.session_state['data'])
 driver_translate = plotting.DRIVER_TRANSLATE
 
 # Map sector times
@@ -180,7 +180,7 @@ for sector_data, sector_name in zip([sector1, sector2, sector3], ['1', '2', '3']
     drv = fastest_by_sector.loc[sector_name, 'Driver']
     time = fastest_by_sector.loc[sector_name, 'Time(s)']
     avg_speed = round((distance*3600)/(time*1000), 2)
-    color = driver_colors[driver_translate[drv]]
+    color = driver_colors.get(drv, 'lightgray')
     customdata = np.stack([[drv]*len(sector_data), [sector_name]*len(sector_data), [time]*len(sector_data), [avg_speed]*len(sector_data)], axis=-1)
     show_in_legend = drv not in added
     added.add(drv)
