@@ -152,6 +152,10 @@ def calculate_daily_portfolio_values(operaciones: pd.DataFrame, transacciones: p
         weekly_dates = weekly_dates + timedelta(days=1)
         
         portfolio_values = []
+
+        # Para TWR
+        twr_acumulado = 1.0
+        valor_inicial_subperiodo = None
         
         for date in date_range:
             # Omitir fin de semana
@@ -166,24 +170,43 @@ def calculate_daily_portfolio_values(operaciones: pd.DataFrame, transacciones: p
             holdings = calculate_current_holdings(ops_hasta_fecha)
             symbols = get_available_symbols(holdings)
             current_prices = get_current_prices(symbols, date)
-            positions_values = {}
-            for row in holdings.index:
-                positions_values[holdings.at[row, 'Simbolo']] = holdings.at[row, 'Cantidad'] * current_prices[holdings.at[row, 'Simbolo']]
-            
+            valor_posiciones = sum(
+                holdings.at[row, 'Cantidad'] * current_prices[holdings.at[row, 'Simbolo']]
+                for row in holdings.index
+            )
+
             # Calcular efectivo
             efectivo = calculate_cash_position(trans_hasta_fecha, ops_hasta_fecha, div_hasta_fecha)
+            valor_portafolio = valor_posiciones + efectivo
+            
+            # Detectar si es el inicio del subperiodo
+            if valor_inicial_subperiodo is None:
+                valor_inicial_subperiodo = valor_portafolio
+            
+            r_sub = (valor_portafolio / valor_inicial_subperiodo) - 1
+            twr_acumulado *= (1 + r_sub)
+
+            # Si hay flujo de caja en esta fecha -> cerramos subperiodo
+            trans_hoy = transacciones[transacciones['Fecha'] == date] if not transacciones.empty else pd.DataFrame()
+            if not trans_hoy.empty:
+                valor_inicial_subperiodo = valor_portafolio  # reinicia subperiodo
+            
+            
+            # Rendimiento acumulado TWR
+            rendimiento_twr = (twr_acumulado - 1) * 100
             
             # Calcular valor total (simplificado sin precios históricos)
             costo_invertido = ops_hasta_fecha[ops_hasta_fecha['Tipo'] == 'Compra']['Valor'].sum() if not ops_hasta_fecha.empty else 0
             
-            valor_posiciones = sum(positions_values.values())
+            #valor_posiciones = sum(positions_values.values())
             rendimiento = ((valor_posiciones + efectivo)/(costo_invertido + efectivo) - 1) * 100
             
             portfolio_values.append({
                 'Fecha': date,
                 'Efectivo': efectivo,
-                'Costo_Invertido': costo_invertido,
+                #'Costo_Invertido': costo_invertido,
                 'Valor_Posiciones': valor_posiciones,
+                'Valor_Portafolio': valor_portafolio,
                 'Rendimiento': rendimiento,
                 'Num_Posiciones': len(holdings),
                 'Dividendos_Acumulados': div_hasta_fecha['Total'].sum() if not div_hasta_fecha.empty else 0
@@ -427,7 +450,7 @@ def calculate_sector_allocation(holdings: pd.DataFrame, current_prices: Dict[str
             'BABAN.MX': 'Consumer Cyclical',
             'CRSPN.MX': 'Healthcare',
             'IVVPESOISHRS.MX': 'ETF - Diversified',
-            'QQQM': 'ETF - Technology',
+            'QQQM.MX': 'ETF - Technology',
             'VTI': 'ETF - Total Market',
             'VOO': 'ETF - S&P 500'
         }

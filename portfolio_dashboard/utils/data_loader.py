@@ -280,7 +280,7 @@ def get_current_prices(symbols: list, date: datetime = None) -> Dict[str, float]
                     if not history.empty and len(history) > 0:
                         price = history['Close'].iat[0]
                     else:
-                        price = info['currentPrice']
+                        price = info['currentPrice'] if 'currentPrice' in info else info['regularMarketPrice']
                     
                     if price:
                         prices[symbol] = float(price)
